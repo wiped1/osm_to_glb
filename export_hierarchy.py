@@ -81,7 +81,7 @@ class ExportGLBFromOSM(bpy.types.Operator):
                 mat4.append(col[2])
                 mat4.append(col[3])
             f = open(os.path.join(path, name + '.meta'), 'w')
-            f.write(json.dumps({'translation': mat4}))
+            f.write(json.dumps({'transform': mat4}))
             
             # set current object as active
             bpy.context.scene.objects.active = obj
