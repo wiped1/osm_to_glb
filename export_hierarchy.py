@@ -64,12 +64,13 @@ class ExportGLBFromOSM(bpy.types.Operator):
         return {'FINISHED'}
     
     def create_hierarchy(self, obj, path):
-        path = os.path.join(path, obj.name)
+        name = obj.name.replace(" ", "_")
+        path = os.path.join(path, name)
         if not os.path.exists(path):
             os.makedirs(path)
             
         if obj.type == 'EMPTY':
-            f = open(os.path.join(path, obj.name + '.meta'), 'w')
+            f = open(os.path.join(path, name + '.meta'), 'w')
             f.write(json.dumps({'lon': bpy.context.scene['lon'], 'lat': bpy.context.scene['lat']}))
             
         if obj.type == 'MESH':
@@ -79,7 +80,7 @@ class ExportGLBFromOSM(bpy.types.Operator):
                 mat4.append(col[1])
                 mat4.append(col[2])
                 mat4.append(col[3])
-            f = open(os.path.join(path, obj.name + '.meta'), 'w')
+            f = open(os.path.join(path, name + '.meta'), 'w')
             f.write(json.dumps({'translation': mat4}))
             
             # set current object as active
@@ -87,7 +88,7 @@ class ExportGLBFromOSM(bpy.types.Operator):
             obj.select = True
             # export to binary gltf
             bpy.ops.export_scene.gltf(
-                filepath=os.path.join(path, obj.name + '.glb'),
+                filepath=os.path.join(path, name + '.glb'),
                 nodes_selected_only = True,
                 buffers_embed_data = True,
                 gltf_export_binary = True
