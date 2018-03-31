@@ -86,6 +86,10 @@ class ExportGLBFromOSM(bpy.types.Operator):
             # set current object as active
             bpy.context.scene.objects.active = obj
             obj.select = True
+            savedMatrix = obj.matrix_local.copy()
+            # save object in parent origin position
+            # cesium will handle transform later
+            obj.matrix_local.identity()
             # export to binary gltf
             bpy.ops.export_scene.gltf(
                 filepath=os.path.join(path, name + '.glb'),
@@ -93,6 +97,7 @@ class ExportGLBFromOSM(bpy.types.Operator):
                 buffers_embed_data = True,
                 gltf_export_binary = True
             )
+            obj.matrix_local = savedMatrix.copy()
             obj.select = False
         
         for child in obj.children:
