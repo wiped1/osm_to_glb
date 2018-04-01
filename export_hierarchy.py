@@ -82,19 +82,24 @@ class ExportGLBFromOSM(bpy.types.Operator):
                 result.append(col[3])
             return result
 
-        def write_geo_location(f):
-            f.write(json.dumps({'lon': bpy.context.scene['lon'],
-                                'lat': bpy.context.scene['lat']}))
+        def add_geo_location(data):
+            data['lon'] = bpy.context.scene['lon'];
+            data['lat'] = bpy.context.scene['lat'];
 
-        def write_transform(f, mat4):
-            f.write(json.dumps({'transform': mat4}))
+        def add_transform(data, mat4):
+            data['transform'] = mat4;
+
+        def write(f, data):
+            json.dump(data, f)
 
         f = open_meta(path, name)
+        data = {}
         # initial meta object with lon and lat properties
-        if obj.name is self.root_name:
-            write_geo_location(f)
+        if obj.name == self.root_name:
+            add_geo_location(data)
 
-        write_transform(f, serialize_mat4(obj.matrix_local))
+        add_transform(data, serialize_mat4(obj.matrix_local))
+        write(f, data)
 
         if obj.type == 'MESH':
             # set current object as active
@@ -104,6 +109,7 @@ class ExportGLBFromOSM(bpy.types.Operator):
             # save object in parent origin position
             # cesium will handle transform later
             obj.matrix_local.identity()
+            bpy.context.scene.update();
             # export to binary gltf
             bpy.ops.export_scene.gltf(
                 filepath=os.path.join(path, name + '.glb'),
@@ -113,6 +119,7 @@ class ExportGLBFromOSM(bpy.types.Operator):
             )
             obj.matrix_local = savedMatrix.copy()
             obj.select = False
+            bpy.context.scene.update()
 
         for child in obj.children:
             self.create_hierarchy(child, path)
