@@ -16,7 +16,7 @@ class ExportGLBFromOSMProperties(bpy.types.PropertyGroup):
         subtype = "FILE_PATH",
         description = "Path where GLB hierarchy will be exported"
     )
-    
+
     rootObject = bpy.props.StringProperty(
         name = "Root",
         description = "Root hierarchy object. Must not be a mesh"
@@ -28,20 +28,19 @@ class ExportGLBFromOSMPanel(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_category = "osm"
-    
+
     def draw(self, context):
-        # TODO rename properties?
-        addon = context.scene.glb_from_osm
+        props = context.scene.glb_from_osm
         layout = self.layout
-        
+
         box = layout.box()
         row = box.row()
-        row.prop(addon, "output")
+        row.prop(props, "output")
         row = box.row()
-        row.prop_search(addon, "rootObject", context.scene, "objects")
-        
+        row.prop_search(props, "rootObject", context.scene, "objects")
+
         row = layout.row()
-        props = row.operator("object.export_glb_from_osm")
+        row.operator("object.export_glb_from_osm")
 
 class ExportGLBFromOSM(bpy.types.Operator):
     bl_idname = "object.export_glb_from_osm"
@@ -49,40 +48,55 @@ class ExportGLBFromOSM(bpy.types.Operator):
 
     def execute(self, context):
         properties = context.scene.glb_from_osm
-        
+
         if not properties.output:
             self.report({'ERROR'}, 'Output not set!')
             return {'CANCELLED'}
-        
+
         if not properties.rootObject :
             self.report({'ERROR'}, 'Root not set!')
             return {'CANCELLED'}
-        
-        self.root = bpy.data.objects[properties.rootObject]
+
+        self.root_name = properties.rootObject
+        self.root = bpy.data.objects[self.root_name]
         self.output = properties.output
+
         self.create_hierarchy(self.root, self.output)
         return {'FINISHED'}
-    
+
     def create_hierarchy(self, obj, path):
         name = obj.name.replace(" ", "_")
         path = os.path.join(path, name)
         if not os.path.exists(path):
             os.makedirs(path)
-            
-        if obj.type == 'EMPTY':
-            f = open(os.path.join(path, name + '.meta'), 'w')
-            f.write(json.dumps({'lon': bpy.context.scene['lon'], 'lat': bpy.context.scene['lat']}))
-            
-        if obj.type == 'MESH':
-            mat4 = []
-            for col in obj.matrix_local.col:
-                mat4.append(col[0])
-                mat4.append(col[1])
-                mat4.append(col[2])
-                mat4.append(col[3])
-            f = open(os.path.join(path, name + '.meta'), 'w')
+
+        def open_meta(path, name):
+            return open(os.path.join(path, name + '.meta'), 'w')
+
+        def serialize_mat4(mat4):
+            result = []
+            for col in mat4.col:
+                result.append(col[0])
+                result.append(col[1])
+                result.append(col[2])
+                result.append(col[3])
+            return result
+
+        def write_geo_location(f):
+            f.write(json.dumps({'lon': bpy.context.scene['lon'],
+                                'lat': bpy.context.scene['lat']}))
+
+        def write_transform(f, mat4):
             f.write(json.dumps({'transform': mat4}))
-            
+
+        f = open_meta(path, name)
+        # initial meta object with lon and lat properties
+        if obj.name is self.root_name:
+            write_geo_location(f)
+
+        write_transform(f, serialize_mat4(obj.matrix_local))
+
+        if obj.type == 'MESH':
             # set current object as active
             bpy.context.scene.objects.active = obj
             obj.select = True
@@ -99,7 +113,7 @@ class ExportGLBFromOSM(bpy.types.Operator):
             )
             obj.matrix_local = savedMatrix.copy()
             obj.select = False
-        
+
         for child in obj.children:
             self.create_hierarchy(child, path)
 
