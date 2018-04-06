@@ -46,6 +46,21 @@ class ExportGLBFromOSM(bpy.types.Operator):
     bl_idname = "object.export_glb_from_osm"
     bl_label = "Export GLB hierarchy from OSM data"
 
+    def saveLocRotScale_(self, obj):
+        return {'loc': obj.location.copy(),
+                'rot': obj.rotation_quaternion.copy(),
+                'scale': obj.scale.copy() }
+
+    def clearLocRotScale_(self, obj):
+        obj.location = (0, 0, 0)
+        obj.rotation_quaternion = (0, 0, 0, 0)
+        obj.scale = (1, 1, 1)
+
+    def restoreLocRotScale_(self, obj, saved):
+        obj.location = saved['loc']
+        obj.rotation_quaternion = saved['rot']
+        obj.scale = saved['scale']
+
     def execute(self, context):
         properties = context.scene.glb_from_osm
 
@@ -99,28 +114,31 @@ class ExportGLBFromOSM(bpy.types.Operator):
             add_geo_location(data)
 
         add_transform(data, serialize_mat4(obj.matrix_local))
-        write(f, data)
 
         if obj.type == 'MESH':
             # set current object as active
             bpy.context.scene.objects.active = obj
             obj.select = True
-            savedMatrix = obj.matrix_local.copy()
-            # save object in parent origin position
-            # cesium will handle transform later
-            obj.matrix_local.identity()
-            bpy.context.scene.update();
-            # export to binary gltf
+
+            bpy.ops.object.mode_set( mode = 'OBJECT' ) # Make sure we're in object mode
+            bpy.ops.object.origin_set( type = 'ORIGIN_GEOMETRY' ) # Move object origin to center of geometry
+
+            add_transform(data, serialize_mat4(obj.matrix_local))
+
+            savedLocRotScale = self.saveLocRotScale_(obj)
+            self.clearLocRotScale_(obj)
+
             bpy.ops.export_scene.gltf(
                 filepath=os.path.join(path, name + '.glb'),
                 nodes_selected_only = True,
                 buffers_embed_data = True,
                 gltf_export_binary = True
             )
-            obj.matrix_local = savedMatrix.copy()
-            obj.select = False
-            bpy.context.scene.update()
 
+            self.restoreLocRotScale_(obj, savedLocRotScale)
+            obj.select = False
+
+        write(f, data)
         for child in obj.children:
             self.create_hierarchy(child, path)
 
