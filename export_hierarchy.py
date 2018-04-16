@@ -61,6 +61,10 @@ class ExportGLBFromOSM(bpy.types.Operator):
         obj.rotation_quaternion = saved['rot']
         obj.scale = saved['scale']
 
+    def clear_selections_(self):
+        for obj in bpy.data.objects:
+            obj.select = False
+
     def execute(self, context):
         properties = context.scene.glb_from_osm
 
@@ -68,14 +72,14 @@ class ExportGLBFromOSM(bpy.types.Operator):
             self.report({'ERROR'}, 'Output not set!')
             return {'CANCELLED'}
 
-        if not properties.rootObject :
+        if not properties.rootObject:
             self.report({'ERROR'}, 'Root not set!')
             return {'CANCELLED'}
 
         self.root_name = properties.rootObject
         self.root = bpy.data.objects[self.root_name]
         self.output = properties.output
-
+        self.clear_selections_()
         self.create_hierarchy(self.root, self.output)
         return {'FINISHED'}
 
