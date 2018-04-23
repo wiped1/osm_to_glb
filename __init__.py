@@ -1,6 +1,13 @@
 bl_info = {
-    "name": "Export OSM data to GLB hierarchy",
-    "category": "Object"
+    "name": "OSM to GLB",
+    "description": "Export GLB hierarchy from OSM data",
+    "warning": "",
+    "author": "Mateusz Dudek",
+    "version": (0, 1),
+    "blender": (2, 7, 8),
+    "tracker_url": "https://github.com/wiped1/osm_to_glb",
+    "support": "COMMUNITY",
+    "category": "Import-Export"
 }
 
 import bpy
