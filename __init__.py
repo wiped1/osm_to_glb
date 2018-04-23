@@ -15,8 +15,6 @@ import os
 import json
 import sys
 
-gltf = sys.modules['blendergltf-master']
-
 class ExportGLBFromOSMProperties(bpy.types.PropertyGroup):
     output = bpy.props.StringProperty(
         name = "Output",
