@@ -18,3 +18,6 @@ Blender addon used to export glb models, along with metadata required by [3d_til
 In order to be able to convert hierarchy to cesium-supported tilesets, the Scene has to have `lon` and `lat` properties which can be added in blender scene properties.
 
 ![Scene-props](/screenshots/scene_props.png?raw=true "Scene props")
+
+# License
+Licensed under MIT license (see [LICENSE.md](LICENSE.md))
