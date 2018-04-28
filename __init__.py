@@ -15,6 +15,8 @@ import os
 import json
 import sys
 
+from .lib import Bounds
+
 class ExportGLBFromOSMProperties(bpy.types.PropertyGroup):
     output = bpy.props.StringProperty(
         name = "Output",
@@ -125,6 +127,14 @@ class ExportGLBFromOSM(bpy.types.Operator):
         def add_transform(data, mat4):
             data['transform'] = mat4;
 
+        def add_bounds(data, obj):
+            obj_bounds = Bounds.bounds(obj)
+            result = {}
+            result['x'] = {'min': obj_bounds.x.min, 'max': obj_bounds.x.max, 'distance': obj_bounds.x.distance}
+            result['y'] = {'min': obj_bounds.y.min, 'max': obj_bounds.y.max, 'distance': obj_bounds.y.distance}
+            result['z'] = {'min': obj_bounds.z.min, 'max': obj_bounds.z.max, 'distance': obj_bounds.z.distance}
+            data['bounds'] = result
+
         def write(f, data):
             json.dump(data, f)
 
@@ -146,6 +156,7 @@ class ExportGLBFromOSM(bpy.types.Operator):
             bpy.ops.object.origin_set( type = 'ORIGIN_GEOMETRY' ) # Move object origin to center of geometry
 
             add_transform(data, serialize_mat4(obj.matrix_local))
+            add_bounds(data, obj)
 
             savedLocRotScale = self.saveLocRotScale_(obj)
             self.clearLocRotScale_(obj)
