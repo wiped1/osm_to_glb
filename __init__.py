@@ -27,6 +27,11 @@ class ExportGLBFromOSMProperties(bpy.types.PropertyGroup):
         description = "Root hierarchy object. Must not be a mesh"
     )
 
+    geometricError = bpy.props.FloatProperty(
+        name = "Geometric error",
+        description = "Root geometric error in meters. See cesium 3d-tiles documentation."
+    )
+
 class ExportGLBFromOSMPanel(bpy.types.Panel):
     bl_label = "Export GLB hierarchy from OSM data"
     bl_idname = "OBJECT_PT_export_glb_hierarchy"
@@ -43,6 +48,8 @@ class ExportGLBFromOSMPanel(bpy.types.Panel):
         row.prop(props, "output")
         row = box.row()
         row.prop_search(props, "rootObject", context.scene, "objects")
+        row = box.row()
+        row.prop(props, "geometricError")
 
         row = layout.row()
         row.operator("object.export_glb_from_osm")
@@ -85,10 +92,12 @@ class ExportGLBFromOSM(bpy.types.Operator):
         self.root = bpy.data.objects[self.root_name]
         self.output = properties.output
         self.clear_selections_()
-        self.create_hierarchy(self.root, self.output)
+        self.create_hierarchy(context, self.root, self.output)
         return {'FINISHED'}
 
-    def create_hierarchy(self, obj, path):
+    def create_hierarchy(self, context, obj, path):
+        properties = context.scene.glb_from_osm
+
         name = obj.name.replace(" ", "_")
         path = os.path.join(path, name)
         if not os.path.exists(path):
@@ -110,6 +119,9 @@ class ExportGLBFromOSM(bpy.types.Operator):
             data['lon'] = bpy.context.scene['lon'];
             data['lat'] = bpy.context.scene['lat'];
 
+        def add_geometric_error(data):
+            data['geometricError'] = properties.geometricError
+
         def add_transform(data, mat4):
             data['transform'] = mat4;
 
@@ -121,6 +133,7 @@ class ExportGLBFromOSM(bpy.types.Operator):
         # initial meta object with lon and lat properties
         if obj.name == self.root_name:
             add_geo_location(data)
+            add_geometric_error(data)
 
         add_transform(data, serialize_mat4(obj.matrix_local))
 
@@ -149,7 +162,7 @@ class ExportGLBFromOSM(bpy.types.Operator):
 
         write(f, data)
         for child in obj.children:
-            self.create_hierarchy(child, path)
+            self.create_hierarchy(context, child, path)
 
 def register():
     bpy.utils.register_class(ExportGLBFromOSMProperties)
