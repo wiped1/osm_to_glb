@@ -152,8 +152,8 @@ class ExportGLBFromOSM(bpy.types.Operator):
             bpy.context.scene.objects.active = obj
             obj.select = True
 
-            bpy.ops.object.mode_set( mode = 'OBJECT' ) # Make sure we're in object mode
-            bpy.ops.object.origin_set( type = 'ORIGIN_GEOMETRY' ) # Move object origin to center of geometry
+            bpy.ops.object.mode_set(mode = 'OBJECT')
+            bpy.ops.object.origin_set(type = 'ORIGIN_GEOMETRY', center='BOUNDS')
 
             add_transform(data, serialize_mat4(obj.matrix_local))
             add_bounds(data, obj)
