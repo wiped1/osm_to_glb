@@ -101,7 +101,7 @@ class ExportGLBFromOSM(bpy.types.Operator):
         properties = context.scene.glb_from_osm
 
         name = obj.name.replace(" ", "_")
-        path = os.path.join(path, name)
+        path = bpy.path.abspath(os.path.join(path, name))
         if not os.path.exists(path):
             os.makedirs(path)
 
