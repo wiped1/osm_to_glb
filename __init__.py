@@ -156,10 +156,11 @@ class ExportGLBFromOSM(bpy.types.Operator):
             bpy.ops.object.origin_set(type = 'ORIGIN_GEOMETRY', center='BOUNDS')
 
             add_transform(data, serialize_mat4(obj.matrix_local))
-            add_bounds(data, obj)
 
             savedLocRotScale = self.saveLocRotScale_(obj)
             self.clearLocRotScale_(obj)
+
+            add_bounds(data, obj)
 
             bpy.ops.export_scene.gltf(
                 filepath=os.path.join(path, name + '.glb'),
