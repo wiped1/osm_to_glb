@@ -7,3 +7,7 @@ Simple hierarchy exported from OpenStreetMaps data.
 
 Simple hierarchy exported from OpenStreetMaps data.
 Faster to export and convert than `cracow_main_square`
+
+# hierarchy
+
+Three-element hierarchy. Tests correct parent-child export (ex. no duplicates)
